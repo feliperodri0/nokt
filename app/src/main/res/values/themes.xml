@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base theme for the app -->
+    <style name="Theme.AnotacoesTasks" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.AnotacoesTasks.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">?android:attr/colorBackground</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.AnotacoesTasks</item>
+    </style>
+</resources>

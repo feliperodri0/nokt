@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!--
+        Logotipo B2: "N" bold arredondado — limpo, sem elementos extras.
+        Path escalado de 120×120 → 108×108 (fator 0.9).
+        Safe Zone: centro em 54,54.
+    -->
+    <group
+        android:scaleX="0.75"
+        android:scaleY="0.75"
+        android:pivotX="54"
+        android:pivotY="54">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M30.6,79.2 L30.6,30.6 Q30.6,27 34.2,27 L36,27 Q38.7,27 40.5,29.7 L68.4,73.8 L68.4,30.6 Q68.4,27 72,27 L75.6,27 Q79.2,27 79.2,30.6 L79.2,79.2 Q79.2,82.8 75.6,82.8 L73.8,82.8 Q71.1,82.8 69.3,80.1 L41.4,36 L41.4,79.2 Q41.4,82.8 37.8,82.8 L34.2,82.8 Q30.6,82.8 30.6,79.2 Z" />
+    </group>
+
+</vector>

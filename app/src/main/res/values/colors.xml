@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="splash_background">#2D7A4F</color>
+    <color name="splash_background_rosa">#C2185B</color>
+    <color name="splash_background_vitoria">#FF8FAB</color>
+    <color name="splash_background_oceano">#0054A6</color>
+    <color name="splash_background_roxo">#6750A4</color>
+    <color name="splash_background_light">#6750A4</color>
+    <color name="splash_background_dark">#1C1B1F</color>
+</resources>
