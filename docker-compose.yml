@@ -1,0 +1,15 @@
+services:
+  android-dev:
+    image: eclipse-temurin:17-jdk-jammy
+    container_name: android_builder
+    volumes:
+      - .:/home/developer/app
+      - /home/feliperodr/Android/Sdk:/opt/android-sdk
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - GRADLE_USER_HOME=/home/developer/app/.gradle_container
+    working_dir: /home/developer/app
+    user: "${USER_ID}:${GROUP_ID}"
+    stdin_open: true
+    tty: true
+    command: /bin/bash

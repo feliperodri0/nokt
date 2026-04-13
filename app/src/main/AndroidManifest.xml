@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissões de Notificação e Alarmes -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Permissão para leitura de mídia (Android 13+) para seleção de imagens/arquivos -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <application
+        android:name=".AnotacoesApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AnotacoesTasks" tools:targetApi="34">
+
+        <activity
+            android:name=".presentation.MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AnotacoesTasks.Splash" />
+
+        <activity-alias
+            android:name=".MainActivity"
+            android:targetActivity=".presentation.MainActivity"
+            android:enabled="true"
+            android:exported="true"
+            android:theme="@style/Theme.AnotacoesTasks.Splash"
+            android:icon="@mipmap/ic_launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Ícone Rosa (PINK_ROSE) -->
+        <activity-alias
+            android:name=".MainActivity"
+            android:targetActivity=".presentation.MainActivity"
+            android:enabled="true"
+            android:exported="true"
+            android:theme="@style/Theme.AnotacoesTasks.Splash"
+            android:icon="@mipmap/ic_launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityRosa"
+            android:targetActivity=".presentation.MainActivity"
+            android:theme="@style/Theme.AnotacoesTasks.Splash"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_rosa">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityOceano"
+            android:targetActivity=".presentation.MainActivity"
+            android:theme="@style/Theme.AnotacoesTasks.Splash"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_oceano">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityRoxo"
+            android:targetActivity=".presentation.MainActivity"
+            android:theme="@style/Theme.AnotacoesTasks.Splash"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_roxo">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityVitoria"
+            android:targetActivity=".presentation.MainActivity"
+            android:theme="@style/Theme.AnotacoesTasks.Splash"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_vitoria">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- FileProvider para compartilhar arquivos internos (imagens e documentos) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
+
+        <!-- Boot Receiver: reagenda alarmes após reboot -->
+        <receiver
+            android:name=".receiver.BootCompletedReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Alarm Receiver: recebe alarmes do AlarmManager para tarefas -->
+        <receiver
+            android:name=".receiver.TaskAlarmReceiver"
+            android:exported="false" />
+
+        <!-- Dismiss Receiver: dispensa tarefas da notificação/lock screen -->
+        <receiver
+            android:name=".receiver.TaskDismissReceiver"
+            android:exported="false" />
+
+        <!-- Complete Receiver: marca tarefas como concluídas pela notificação -->
+        <receiver
+            android:name=".receiver.TaskCompleteReceiver"
+            android:exported="false" />
+
+        <!-- Serviço Foreground para notificações de lock screen -->
+        <service
+            android:name=".service.TaskLockScreenService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- Widget Glance -->
+        <receiver
+            android:name=".widget.TaskWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/task_widget_info" />
+        </receiver>
+
+    </application>
+
+</manifest>
