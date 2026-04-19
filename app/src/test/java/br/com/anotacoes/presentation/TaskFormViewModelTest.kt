@@ -550,6 +550,63 @@ class TaskFormViewModelTest {
 
     // --- RemoveAttachment ---
 
+    // --- setInitialDate ---
+
+    @Test
+    fun `setInitialDate should override default date`() = runTest {
+        val futureDate = LocalDate.now().plusDays(5)
+        viewModel.setInitialDate(futureDate)
+
+        val state = viewModel.uiState.first()
+        assertThat(state.date).isEqualTo(futureDate)
+    }
+
+    // --- isDateFieldEnabled (campo data esmaecido por periodicidade) ---
+
+    @Test
+    fun `date field should be enabled by default with SINGLE recurrence`() = runTest {
+        val state = viewModel.uiState.first()
+        assertThat(state.isDateFieldEnabled).isTrue()
+    }
+
+    @Test
+    fun `date field should be disabled when recurrence is DAILY`() = runTest {
+        viewModel.onIntent(TaskFormIntent.UpdateRecurrenceType(RecurrenceTypeOption.DAILY))
+        val state = viewModel.uiState.first()
+        assertThat(state.isDateFieldEnabled).isFalse()
+    }
+
+    @Test
+    fun `date field should be disabled when recurrence is CUSTOM_WEEKLY`() = runTest {
+        viewModel.onIntent(TaskFormIntent.UpdateRecurrenceType(RecurrenceTypeOption.CUSTOM_WEEKLY))
+        val state = viewModel.uiState.first()
+        assertThat(state.isDateFieldEnabled).isFalse()
+    }
+
+    @Test
+    fun `date field should be disabled when recurrence is MONTHLY`() = runTest {
+        viewModel.onIntent(TaskFormIntent.UpdateRecurrenceType(RecurrenceTypeOption.MONTHLY))
+        val state = viewModel.uiState.first()
+        assertThat(state.isDateFieldEnabled).isFalse()
+    }
+
+    @Test
+    fun `date field should be disabled when recurrence is YEARLY`() = runTest {
+        viewModel.onIntent(TaskFormIntent.UpdateRecurrenceType(RecurrenceTypeOption.YEARLY))
+        val state = viewModel.uiState.first()
+        assertThat(state.isDateFieldEnabled).isFalse()
+    }
+
+    @Test
+    fun `date field should re-enable when switching back to SINGLE`() = runTest {
+        viewModel.onIntent(TaskFormIntent.UpdateRecurrenceType(RecurrenceTypeOption.DAILY))
+        viewModel.onIntent(TaskFormIntent.UpdateRecurrenceType(RecurrenceTypeOption.SINGLE))
+        val state = viewModel.uiState.first()
+        assertThat(state.isDateFieldEnabled).isTrue()
+    }
+
+    // --- RemoveAttachment ---
+
     @Test
     fun `RemoveAttachment should remove path from attachments list`() = runTest {
         // Pre-load a task with attachments to avoid needing file I/O

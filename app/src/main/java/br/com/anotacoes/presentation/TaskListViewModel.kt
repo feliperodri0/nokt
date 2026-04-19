@@ -284,25 +284,25 @@ class TaskListViewModel @Inject constructor(
 
     private fun dismissReminder(reminderId: String, taskId: String) {
         viewModelScope.launch {
-            dismissReminderUseCase(reminderId, taskId)
+            try { dismissReminderUseCase(reminderId, taskId) } catch (_: Exception) {}
         }
     }
 
     private fun completeReminder(reminderId: String, taskId: String) {
         viewModelScope.launch {
-            completeReminderUseCase(reminderId, taskId)
+            try { completeReminderUseCase(reminderId, taskId) } catch (_: Exception) {}
         }
     }
 
     private fun deleteReminder(reminderId: String, taskId: String) {
         viewModelScope.launch {
-            deleteReminderUseCase(reminderId, taskId)
+            try { deleteReminderUseCase(reminderId, taskId) } catch (_: Exception) {}
         }
     }
 
     private fun reactivateReminder(reminderId: String, taskId: String) {
         viewModelScope.launch {
-            reactivateReminderUseCase(reminderId, taskId)
+            try { reactivateReminderUseCase(reminderId, taskId) } catch (_: Exception) {}
         }
     }
 
