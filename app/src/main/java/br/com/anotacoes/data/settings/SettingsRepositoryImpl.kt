@@ -61,9 +61,23 @@ class SettingsRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getCalendarExpandOnboardingSeen(): Flow<Boolean> {
+        return dataStore.data.map { prefs ->
+            prefs[KEY_CALENDAR_EXPAND_ONBOARDING_SEEN] ?: false
+        }
+    }
+
+    override suspend fun setCalendarExpandOnboardingSeen(seen: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[KEY_CALENDAR_EXPAND_ONBOARDING_SEEN] = seen
+        }
+    }
+
     companion object {
         private val KEY_APP_THEME = stringPreferencesKey("app_theme")
         private val KEY_SHOW_ALL_NOTIFICATIONS = booleanPreferencesKey("show_all_notifications")
+        private val KEY_CALENDAR_EXPAND_ONBOARDING_SEEN =
+            booleanPreferencesKey("calendar_expand_onboarding_seen")
         const val SPLASH_PREFS = "anotacoes_splash_prefs"
         const val KEY_SPLASH_THEME = "splash_theme"
     }

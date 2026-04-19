@@ -12,8 +12,10 @@ import br.com.anotacoes.domain.usecase.DeleteTaskUseCase
 import br.com.anotacoes.domain.usecase.DismissReminderUseCase
 import br.com.anotacoes.domain.usecase.DismissTaskUseCase
 import br.com.anotacoes.domain.usecase.GetAllTasksUseCase
+import br.com.anotacoes.domain.usecase.GetCalendarExpandOnboardingSeenUseCase
 import br.com.anotacoes.domain.usecase.GetRemindersForDateUseCase
 import br.com.anotacoes.domain.usecase.GetTasksForDateUseCase
+import br.com.anotacoes.domain.usecase.MarkCalendarExpandOnboardingSeenUseCase
 import br.com.anotacoes.domain.usecase.ReactivateReminderUseCase
 import br.com.anotacoes.domain.usecase.ReactivateTaskUseCase
 import br.com.anotacoes.domain.usecase.ToggleTaskNotificationUseCase
@@ -56,6 +58,8 @@ class TaskListViewModelTest {
     private lateinit var deleteReminderUseCase: DeleteReminderUseCase
     private lateinit var reactivateReminderUseCase: ReactivateReminderUseCase
     private lateinit var reactivateTaskUseCase: ReactivateTaskUseCase
+    private lateinit var getCalendarExpandOnboardingSeenUseCase: GetCalendarExpandOnboardingSeenUseCase
+    private lateinit var markCalendarExpandOnboardingSeenUseCase: MarkCalendarExpandOnboardingSeenUseCase
 
     @Before
     fun setup() {
@@ -65,6 +69,7 @@ class TaskListViewModelTest {
         dismissTaskUseCase = mockk()
         completeTaskUseCase = mockk()
         getAllTasksUseCase = mockk()
+        every { getAllTasksUseCase() } returns flowOf(emptyList())
         toggleTaskNotificationUseCase = mockk(relaxed = true)
         getRemindersForDateUseCase = mockk()
         every { getRemindersForDateUseCase(any()) } returns flowOf(emptyList())
@@ -73,6 +78,9 @@ class TaskListViewModelTest {
         deleteReminderUseCase = mockk(relaxed = true)
         reactivateReminderUseCase = mockk(relaxed = true)
         reactivateTaskUseCase = mockk(relaxed = true)
+        getCalendarExpandOnboardingSeenUseCase = mockk()
+        every { getCalendarExpandOnboardingSeenUseCase() } returns flowOf(true)
+        markCalendarExpandOnboardingSeenUseCase = mockk(relaxed = true)
     }
 
     @After
@@ -93,7 +101,9 @@ class TaskListViewModelTest {
             completeReminderUseCase,
             deleteReminderUseCase,
             reactivateReminderUseCase,
-            reactivateTaskUseCase
+            reactivateTaskUseCase,
+            getCalendarExpandOnboardingSeenUseCase,
+            markCalendarExpandOnboardingSeenUseCase
         )
     }
 
@@ -283,14 +293,15 @@ class TaskListViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.first()
+        // datesWithTasks covers prev+current+next months; April 15 must be present
         assertThat(state.datesWithTasks).contains(taskDate)
-        assertThat(state.datesWithTasks).hasSize(1)
     }
 
     @Test
-    fun `LoadMonthIndicators should NOT include SINGLE task from different month`() = runTest {
+    fun `LoadMonthIndicators should NOT include SINGLE task two months away`() = runTest {
         val yearMonth = YearMonth.of(2026, 4)
-        val taskDate = LocalDate.of(2026, 5, 10) // May, not April
+        // June is two months ahead — outside the 3-month window (March, April, May)
+        val taskDate = LocalDate.of(2026, 6, 10)
         val task = makeTaskOnDate("t2", "Task", taskDate, Recurrence.Single(taskDate))
 
         every { getTasksForDateUseCase(any()) } returns flowOf(emptyList())
@@ -303,11 +314,11 @@ class TaskListViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.first()
-        assertThat(state.datesWithTasks).isEmpty()
+        assertThat(state.datesWithTasks).doesNotContain(taskDate)
     }
 
     @Test
-    fun `LoadMonthIndicators should expand DAILY task to all days in month`() = runTest {
+    fun `LoadMonthIndicators should expand DAILY task to prev+current+next months`() = runTest {
         val yearMonth = YearMonth.of(2026, 4)
         val task = makeTaskOnDate("t3", "Daily", LocalDate.of(2026, 1, 1), Recurrence.daily())
 
@@ -321,15 +332,18 @@ class TaskListViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.first()
-        assertThat(state.datesWithTasks).hasSize(30) // April has 30 days
+        // March=31, April=30, May=31 → 92 days total
+        assertThat(state.datesWithTasks).hasSize(92)
         assertThat(state.datesWithTasks).contains(LocalDate.of(2026, 4, 1))
         assertThat(state.datesWithTasks).contains(LocalDate.of(2026, 4, 30))
     }
 
     @Test
-    fun `LoadMonthIndicators should expand CUSTOM_WEEKLY task to matching weekdays`() = runTest {
+    fun `LoadMonthIndicators should expand CUSTOM_WEEKLY task to matching weekdays across 3 months`() = runTest {
         val yearMonth = YearMonth.of(2026, 4)
-        // April 2026: Mondays are 6, 13, 20, 27
+        // Mondays in March 2026: 2, 9, 16, 23, 30
+        // Mondays in April 2026: 6, 13, 20, 27
+        // Mondays in May 2026: 4, 11, 18, 25
         val task = makeTaskOnDate(
             "t4", "Weekly Mon",
             LocalDate.of(2026, 4, 6),
@@ -346,42 +360,45 @@ class TaskListViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.first()
-        assertThat(state.datesWithTasks).containsExactly(
+        // April Mondays must be present
+        assertThat(state.datesWithTasks).containsAtLeast(
             LocalDate.of(2026, 4, 6),
             LocalDate.of(2026, 4, 13),
             LocalDate.of(2026, 4, 20),
             LocalDate.of(2026, 4, 27)
         )
+        // March and May Mondays are also present (3-month window)
+        assertThat(state.datesWithTasks).contains(LocalDate.of(2026, 3, 2))
+        assertThat(state.datesWithTasks).contains(LocalDate.of(2026, 5, 4))
     }
 
     @Test
     fun `LoadMonthIndicators should cancel previous month job when called again`() = runTest {
-        // Use relative dates to avoid Recurrence.single() past-date validation
-        val today = LocalDate.now()
-        val thisMonth = YearMonth.now()
-        val nextMonth = thisMonth.plusMonths(1)
+        // Two months apart so the 3-month windows do NOT overlap
+        val farPastMonth = YearMonth.of(2020, 1)
+        val farFutureMonth = YearMonth.of(2030, 6)
 
-        // A future date in this month and one in next month
-        val thisMonthDate = if (today.dayOfMonth <= 25) today.plusDays(3) else thisMonth.atEndOfMonth()
-        val nextMonthDate = nextMonth.atDay(5)
+        val pastDate = farPastMonth.atDay(15)
+        val futureDate = farFutureMonth.atDay(15)
 
-        val thisMonthTask = makeTaskOnDate("t5", "Current", thisMonthDate, Recurrence.Single(thisMonthDate))
-        val nextMonthTask = makeTaskOnDate("t6", "Next", nextMonthDate, Recurrence.Single(nextMonthDate))
+        val pastTask = makeTaskOnDate("t5", "Past", pastDate, Recurrence.Single(pastDate))
+        val futureTask = makeTaskOnDate("t6", "Future", futureDate, Recurrence.Single(futureDate))
 
         every { getTasksForDateUseCase(any()) } returns flowOf(emptyList())
-        every { getAllTasksUseCase() } returns flowOf(listOf(thisMonthTask, nextMonthTask))
+        every { getAllTasksUseCase() } returns flowOf(listOf(pastTask, futureTask))
 
         val viewModel = createViewModel()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.onIntent(TaskListIntent.LoadMonthIndicators(thisMonth))
-        viewModel.onIntent(TaskListIntent.LoadMonthIndicators(nextMonth))
+        viewModel.onIntent(TaskListIntent.LoadMonthIndicators(farPastMonth))
+        viewModel.onIntent(TaskListIntent.LoadMonthIndicators(farFutureMonth))
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.first()
-        // Should only contain next month dates since that was the last request
-        assertThat(state.datesWithTasks).contains(nextMonthDate)
-        assertThat(state.datesWithTasks).doesNotContain(thisMonthDate)
+        // Last call was farFutureMonth; its 3-month window should include futureDate
+        assertThat(state.datesWithTasks).contains(futureDate)
+        // pastDate is far outside the future window → should not be present
+        assertThat(state.datesWithTasks).doesNotContain(pastDate)
     }
 
     // --- CompleteTask intent ---

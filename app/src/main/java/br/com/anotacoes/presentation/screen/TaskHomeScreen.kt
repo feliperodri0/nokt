@@ -415,19 +415,8 @@ private fun CustomTopBar(title: String, onMenuClick: () -> Unit) {
             overflow = TextOverflow.Ellipsis
         )
 
-//        Box(
-//            modifier = Modifier
-//                .size(34.dp)
-//                .clip(CircleShape)
-//                .background(MaterialTheme.colorScheme.primary),
-//            contentAlignment = Alignment.Center
-//        ) {
-//            Text(
-//                text = "F",
-//                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-//                color = MaterialTheme.colorScheme.onPrimary
-//            )
-//        }
+        // Spacer replacing the avatar to keep the title centered
+        Box(modifier = Modifier.size(34.dp))
     }
 }
 

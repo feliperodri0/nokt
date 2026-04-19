@@ -10,7 +10,10 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,17 +22,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.BatteryFull
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,11 +40,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun PermissionScreen(onAllPermissionsHandled: () -> Unit) {
@@ -84,34 +87,49 @@ fun PermissionScreen(onAllPermissionsHandled: () -> Unit) {
         notificationGranted = granted
     }
 
-    Scaffold { paddingValues ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(24.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 18.dp, vertical = 22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "Permissoes Necessarias",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
+            // ── Centered header ───────────────────────────────────────────────
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(vertical = 16.dp)
+            ) {
+                Text(
+                    text = "\uD83D\uDD14",
+                    fontSize = 50.sp
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Permissoes Necessarias",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(5.dp))
+                Text(
+                    text = "Para que o app funcione corretamente, precisamos das seguintes permissoes:",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 20.sp
+                )
+            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Para que o app funcione corretamente, precisamos das seguintes permissoes:",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            PermissionItem(
+            // ── Permission cards ──────────────────────────────────────────────
+            PermissionCard(
                 icon = Icons.Default.Notifications,
                 title = "Notificacoes",
                 description = "Exibir lembretes das suas tarefas",
@@ -123,9 +141,7 @@ fun PermissionScreen(onAllPermissionsHandled: () -> Unit) {
                 }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            PermissionItem(
+            PermissionCard(
                 icon = Icons.Default.Alarm,
                 title = "Alarmes Exatos",
                 description = "Garantir que os alertas disparem no horario certo",
@@ -146,9 +162,7 @@ fun PermissionScreen(onAllPermissionsHandled: () -> Unit) {
                 }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            PermissionItem(
+            PermissionCard(
                 icon = Icons.Default.BatteryFull,
                 title = "Otimizacao de Bateria",
                 description = "Impedir que o sistema encerre o app em segundo plano",
@@ -165,17 +179,29 @@ fun PermissionScreen(onAllPermissionsHandled: () -> Unit) {
                 }
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = onAllPermissionsHandled,
-                modifier = Modifier.fillMaxWidth()
+            // ── Primary "Continue" button ─────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable(onClick = onAllPermissionsHandled)
+                    .padding(vertical = 14.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Continuar")
+                Text(
+                    text = "Continuar",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
 
             if (!notificationGranted || !alarmGranted || !batteryGranted) {
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Algumas permissoes ainda nao foram concedidas. O app pode nao funcionar corretamente.",
                     style = MaterialTheme.typography.labelSmall,
@@ -188,7 +214,7 @@ fun PermissionScreen(onAllPermissionsHandled: () -> Unit) {
 }
 
 @Composable
-private fun PermissionItem(
+private fun PermissionCard(
     icon: ImageVector,
     title: String,
     description: String,
@@ -196,67 +222,120 @@ private fun PermissionItem(
     onRequest: () -> Unit,
     onRefresh: (() -> Unit)? = null
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isGranted)
-                MaterialTheme.colorScheme.secondaryContainer
-            else
-                MaterialTheme.colorScheme.surfaceVariant
-        )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
+        // Icon in surfaceVariant box (per design spec)
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .size(44.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = if (isGranted) Icons.Default.CheckCircle else icon,
+                imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(40.dp),
-                tint = if (isGranted)
-                    MaterialTheme.colorScheme.secondary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp)
             )
+        }
 
-            Column(
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
+
+        // Status badge
+        if (isGranted) {
+            Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 12.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "OK",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
-
-            if (!isGranted) {
-                OutlinedButton(onClick = onRequest) {
-                    Text("Permitir")
+        } else {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "Pendente",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
-            } else if (onRefresh != null) {
-                // Provide a way to re-check after user returns from settings
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
+                        .clickable(onClick = onRequest)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "Permitir",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                if (onRefresh != null) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+                            .clickable(onClick = onRefresh)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "Verificar",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
-        }
-    }
-
-    // Refresh button for permissions that require going to settings
-    if (!isGranted && onRefresh != null) {
-        OutlinedButton(
-            onClick = onRefresh,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
-        ) {
-            Text("Ja concedi - verificar novamente")
         }
     }
 }

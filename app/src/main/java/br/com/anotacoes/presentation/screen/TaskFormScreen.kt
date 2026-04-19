@@ -58,6 +58,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.rememberTooltipState
@@ -217,14 +218,28 @@ fun TaskFormScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(if (uiState.editingTaskId != null) "Editar Tarefa" else "Nova Tarefa") },
+                title = {
+                    Text(
+                        if (uiState.editingTaskId != null) "Editar Tarefa" else "Nova Tarefa",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { paddingValues ->
@@ -232,9 +247,9 @@ fun TaskFormScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(horizontal = 18.dp, vertical = 14.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             // ── Title ──
             FormSectionLabel("Título")
@@ -612,12 +627,21 @@ fun TaskFormScreen(
             }
 
             // ── Save button ──
-            Button(
-                onClick = { viewModel.onIntent(TaskFormIntent.Save) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable { viewModel.onIntent(TaskFormIntent.Save) }
+                    .padding(vertical = 14.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Salvar", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = "Salvar tarefa",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))

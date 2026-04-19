@@ -12,8 +12,10 @@ import br.com.anotacoes.domain.usecase.DeleteTaskUseCase
 import br.com.anotacoes.domain.usecase.DismissReminderUseCase
 import br.com.anotacoes.domain.usecase.DismissTaskUseCase
 import br.com.anotacoes.domain.usecase.GetAllTasksUseCase
+import br.com.anotacoes.domain.usecase.GetCalendarExpandOnboardingSeenUseCase
 import br.com.anotacoes.domain.usecase.GetRemindersForDateUseCase
 import br.com.anotacoes.domain.usecase.GetTasksForDateUseCase
+import br.com.anotacoes.domain.usecase.MarkCalendarExpandOnboardingSeenUseCase
 import br.com.anotacoes.domain.usecase.ReactivateReminderUseCase
 import br.com.anotacoes.domain.usecase.ReactivateTaskUseCase
 import br.com.anotacoes.domain.usecase.ToggleTaskNotificationUseCase
@@ -51,6 +53,8 @@ class TaskListViewModelReminderTest {
     private lateinit var deleteReminderUseCase: DeleteReminderUseCase
     private lateinit var reactivateReminderUseCase: ReactivateReminderUseCase
     private lateinit var reactivateTaskUseCase: ReactivateTaskUseCase
+    private lateinit var getCalendarExpandOnboardingSeenUseCase: GetCalendarExpandOnboardingSeenUseCase
+    private lateinit var markCalendarExpandOnboardingSeenUseCase: MarkCalendarExpandOnboardingSeenUseCase
 
     private val today: LocalDate = LocalDate.now()
 
@@ -69,6 +73,9 @@ class TaskListViewModelReminderTest {
         deleteReminderUseCase = mockk(relaxed = true)
         reactivateReminderUseCase = mockk(relaxed = true)
         reactivateTaskUseCase = mockk(relaxed = true)
+        getCalendarExpandOnboardingSeenUseCase = mockk()
+        every { getCalendarExpandOnboardingSeenUseCase() } returns flowOf(true)
+        markCalendarExpandOnboardingSeenUseCase = mockk(relaxed = true)
 
         every { getTasksForDateUseCase(any()) } returns flowOf(emptyList())
         every { getAllTasksUseCase() } returns flowOf(emptyList())
@@ -93,7 +100,9 @@ class TaskListViewModelReminderTest {
             completeReminderUseCase,
             deleteReminderUseCase,
             reactivateReminderUseCase,
-            reactivateTaskUseCase
+            reactivateTaskUseCase,
+            getCalendarExpandOnboardingSeenUseCase,
+            markCalendarExpandOnboardingSeenUseCase
         )
     }
 

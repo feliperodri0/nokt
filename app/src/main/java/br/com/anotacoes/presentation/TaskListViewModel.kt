@@ -13,8 +13,10 @@ import br.com.anotacoes.domain.usecase.DeleteTaskUseCase
 import br.com.anotacoes.domain.usecase.DismissReminderUseCase
 import br.com.anotacoes.domain.usecase.DismissTaskUseCase
 import br.com.anotacoes.domain.usecase.GetAllTasksUseCase
+import br.com.anotacoes.domain.usecase.GetCalendarExpandOnboardingSeenUseCase
 import br.com.anotacoes.domain.usecase.GetRemindersForDateUseCase
 import br.com.anotacoes.domain.usecase.GetTasksForDateUseCase
+import br.com.anotacoes.domain.usecase.MarkCalendarExpandOnboardingSeenUseCase
 import br.com.anotacoes.domain.usecase.ReactivateReminderUseCase
 import br.com.anotacoes.domain.usecase.ReactivateTaskUseCase
 import br.com.anotacoes.domain.usecase.ToggleTaskNotificationUseCase
@@ -24,6 +26,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -39,7 +42,10 @@ data class TaskListUiState(
     val datesWithTasks: Set<LocalDate> = emptySet(),
     val selectedReminder: Reminder? = null,
     val reminderPendingDelete: Reminder? = null,
-    val taskPendingDelete: Task? = null
+    val taskPendingDelete: Task? = null,
+    val isCalendarExpanded: Boolean = false,
+    val showExpandOnboarding: Boolean = false,
+    val tasksByDate: Map<LocalDate, List<Task>> = emptyMap()
 )
 
 sealed class TaskListIntent {
@@ -65,6 +71,8 @@ sealed class TaskListIntent {
     data class RequestDeleteTask(val task: Task) : TaskListIntent()
     data object ConfirmDeleteTask : TaskListIntent()
     data object CancelDeleteTask : TaskListIntent()
+    data class ToggleCalendarExpanded(val expanded: Boolean) : TaskListIntent()
+    data object DismissExpandOnboarding : TaskListIntent()
 }
 
 @HiltViewModel
@@ -80,7 +88,9 @@ class TaskListViewModel @Inject constructor(
     private val completeReminderUseCase: CompleteReminderUseCase,
     private val deleteReminderUseCase: DeleteReminderUseCase,
     private val reactivateReminderUseCase: ReactivateReminderUseCase,
-    private val reactivateTaskUseCase: ReactivateTaskUseCase
+    private val reactivateTaskUseCase: ReactivateTaskUseCase,
+    private val getCalendarExpandOnboardingSeenUseCase: GetCalendarExpandOnboardingSeenUseCase,
+    private val markCalendarExpandOnboardingSeenUseCase: MarkCalendarExpandOnboardingSeenUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TaskListUiState())
@@ -94,6 +104,12 @@ class TaskListViewModel @Inject constructor(
         loadTasksForDate(LocalDate.now())
         loadRemindersForDate(LocalDate.now())
         loadMonthIndicators(YearMonth.now())
+        viewModelScope.launch {
+            try {
+                val seen = getCalendarExpandOnboardingSeenUseCase().first()
+                _uiState.value = _uiState.value.copy(showExpandOnboarding = !seen)
+            } catch (_: Exception) {}
+        }
     }
 
     fun onIntent(intent: TaskListIntent) {
@@ -152,6 +168,15 @@ class TaskListViewModel @Inject constructor(
             is TaskListIntent.CancelDeleteTask -> {
                 _uiState.value = _uiState.value.copy(taskPendingDelete = null)
             }
+            is TaskListIntent.ToggleCalendarExpanded -> {
+                _uiState.value = _uiState.value.copy(isCalendarExpanded = intent.expanded)
+            }
+            is TaskListIntent.DismissExpandOnboarding -> {
+                _uiState.value = _uiState.value.copy(showExpandOnboarding = false)
+                viewModelScope.launch {
+                    try { markCalendarExpandOnboardingSeenUseCase() } catch (_: Exception) {}
+                }
+            }
         }
     }
 
@@ -204,13 +229,59 @@ class TaskListViewModel @Inject constructor(
                                     expandTaskDatesToMonth(task, yearMonth.plusMonths(1))
                         }
                         .toSet()
-                    _uiState.value = _uiState.value.copy(datesWithTasks = datesWithTasks)
+
+                    // Build tasksByDate using only actual occurrence dates (no advance reminders)
+                    val tasksByDate = tasks
+                        .flatMap { task ->
+                            expandTaskDatesWithTask(task, yearMonth)
+                        }
+                        .groupBy { it.first }
+                        .mapValues { entry -> entry.value.map { pair -> pair.second } }
+
+                    _uiState.value = _uiState.value.copy(
+                        datesWithTasks = datesWithTasks,
+                        tasksByDate = tasksByDate
+                    )
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
             }
         }
+    }
+
+    private fun expandTaskDatesWithTask(task: Task, yearMonth: YearMonth): List<Pair<LocalDate, Task>> {
+        val occurrenceDates = when (task.recurrence.type) {
+            RecurrenceType.Single -> {
+                if (YearMonth.from(task.date) == yearMonth) listOf(task.date) else emptyList()
+            }
+            RecurrenceType.Daily -> {
+                (1..yearMonth.lengthOfMonth()).map { yearMonth.atDay(it) }
+            }
+            RecurrenceType.CustomWeekly -> {
+                val weekDays = task.recurrence.daysOfWeek ?: emptyList()
+                (1..yearMonth.lengthOfMonth())
+                    .map { yearMonth.atDay(it) }
+                    .filter { date ->
+                        val dow = DayOfWeek.valueOf(date.dayOfWeek.name)
+                        weekDays.contains(dow)
+                    }
+            }
+            RecurrenceType.Monthly -> {
+                val dom = task.recurrence.dayOfMonth ?: return emptyList()
+                if (dom <= yearMonth.lengthOfMonth()) listOf(yearMonth.atDay(dom)) else emptyList()
+            }
+            RecurrenceType.Yearly -> {
+                val month = task.recurrence.month ?: return emptyList()
+                val day = task.recurrence.dayOfMonth ?: return emptyList()
+                if (yearMonth.monthValue == month && day <= yearMonth.lengthOfMonth()) {
+                    listOf(yearMonth.atDay(day))
+                } else {
+                    emptyList()
+                }
+            }
+        }
+        return occurrenceDates.map { date -> date to task }
     }
 
     private fun expandTaskDatesToMonth(task: Task, yearMonth: YearMonth): List<LocalDate> {

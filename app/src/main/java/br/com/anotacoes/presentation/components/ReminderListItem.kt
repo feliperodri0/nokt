@@ -2,7 +2,6 @@ package br.com.anotacoes.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,8 +19,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,67 +48,74 @@ fun ReminderListItem(
     modifier: Modifier = Modifier
 ) {
     val isInactive = reminder.isInactive
-    val alpha = if (isInactive) 0.45f else 1f
+    val alpha = if (isInactive) 0.48f else 1f
     val titleDecoration = if (reminder.status == ReminderStatus.COMPLETED) {
         TextDecoration.LineThrough
     } else {
         TextDecoration.None
     }
 
-    Card(
+    // Left bar: secondary for active, muted/outline for inactive
+    val barColor = if (isInactive) MaterialTheme.colorScheme.outline
+                   else MaterialTheme.colorScheme.secondary
+
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .alpha(alpha)
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isInactive) 0.dp else 2.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isInactive)
-                MaterialTheme.colorScheme.surfaceVariant
-            else
-                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
-        )
+            .shadow(elevation = if (isInactive) 0.dp else 2.dp, shape = RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
     ) {
+        // Left colored bar
+        Box(
+            modifier = Modifier
+                .width(5.dp)
+                .height(72.dp)
+                .background(barColor)
+        )
+
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+                .weight(1f)
+                .padding(horizontal = 12.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Badge "Lembrete"
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondary)
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Lembrete",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
+            Column(modifier = Modifier.weight(1f)) {
+                // "Lembrete" badge
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.secondary)
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "Lembrete",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
                         color = MaterialTheme.colorScheme.onSecondary
                     )
-                )
-            }
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
+                }
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = reminder.taskTitle,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textDecoration = titleDecoration
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = when (reminder.daysBeforeTask) {
                         1 -> "Falta 1 dia para a tarefa"
-                        0 -> "Hoje é o dia da tarefa!"
+                        0 -> "Hoje e o dia da tarefa!"
                         else -> "Faltam ${reminder.daysBeforeTask} dias para a tarefa"
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -119,50 +124,73 @@ fun ReminderListItem(
                 if (isInactive) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = if (reminder.status == ReminderStatus.COMPLETED) "Concluído" else "Dispensado",
+                        text = if (reminder.status == ReminderStatus.COMPLETED) "Concluido" else "Dispensado",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.outline
                     )
                 }
             }
 
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 if (!isInactive) {
-                    IconButton(onClick = onComplete, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = "Concluir lembrete",
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    IconButton(onClick = onDismiss, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Dispensar lembrete",
-                            tint = MaterialTheme.colorScheme.outline,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    ReminderActionCircle(
+                        onClick = onComplete,
+                        bgColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f),
+                        iconColor = MaterialTheme.colorScheme.secondary,
+                        icon = Icons.Default.CheckCircle,
+                        description = "Concluir lembrete"
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    ReminderActionCircle(
+                        onClick = onDismiss,
+                        bgColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.14f),
+                        iconColor = MaterialTheme.colorScheme.tertiary,
+                        icon = Icons.Default.Close,
+                        description = "Dispensar lembrete"
+                    )
                 } else {
-                    IconButton(onClick = onReactivate, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = "Desfazer",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-                IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Excluir lembrete",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(20.dp)
+                    ReminderActionCircle(
+                        onClick = onReactivate,
+                        bgColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                        iconColor = MaterialTheme.colorScheme.primary,
+                        icon = Icons.Default.Refresh,
+                        description = "Desfazer"
                     )
                 }
+                Spacer(modifier = Modifier.width(4.dp))
+                ReminderActionCircle(
+                    onClick = onDelete,
+                    bgColor = MaterialTheme.colorScheme.error.copy(alpha = 0.14f),
+                    iconColor = MaterialTheme.colorScheme.error,
+                    icon = Icons.Default.Delete,
+                    description = "Excluir lembrete"
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun ReminderActionCircle(
+    onClick: () -> Unit,
+    bgColor: androidx.compose.ui.graphics.Color,
+    iconColor: androidx.compose.ui.graphics.Color,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    description: String
+) {
+    Box(
+        modifier = Modifier
+            .size(28.dp)
+            .clip(CircleShape)
+            .background(bgColor)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = description,
+            tint = iconColor,
+            modifier = Modifier.size(16.dp)
+        )
     }
 }
