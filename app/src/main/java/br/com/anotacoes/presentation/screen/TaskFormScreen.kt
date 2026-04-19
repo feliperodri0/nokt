@@ -45,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -54,9 +55,12 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
@@ -246,16 +250,31 @@ fun TaskFormScreen(
             // ── Date ──
             FormSectionLabel("Data")
             val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale("pt", "BR"))
-            OutlinedTextField(
-                value = uiState.date.format(dateFormatter),
-                onValueChange = {},
-                label = { Text("Data") },
-                modifier = Modifier.fillMaxWidth(),
-                readOnly = true,
-                trailingIcon = {
-                    TextButton(onClick = { showDatePicker = true }) { Text("Alterar") }
-                }
-            )
+            val isDateEnabled = uiState.isDateFieldEnabled
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                tooltip = {
+                    if (!isDateEnabled) {
+                        PlainTooltip { Text("A data é definida pela configuração de periodicidade") }
+                    }
+                },
+                state = rememberTooltipState()
+            ) {
+                OutlinedTextField(
+                    value = uiState.date.format(dateFormatter),
+                    onValueChange = {},
+                    label = { Text("Data") },
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    enabled = isDateEnabled,
+                    trailingIcon = if (isDateEnabled) {
+                        { TextButton(onClick = { showDatePicker = true }) { Text("Alterar") } }
+                    } else null,
+                    supportingText = if (!isDateEnabled) {
+                        { Text("Não aplicável para a periodicidade selecionada") }
+                    } else null
+                )
+            }
 
             // ── Time ──
             FormSectionLabel("Horário")
@@ -426,7 +445,13 @@ fun TaskFormScreen(
             }
 
             // ── Advance Reminders ──
-            FormSectionLabel("Lembrar antes")
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                tooltip = { PlainTooltip { Text("Lembretes gerados diariamente até o dia anterior à tarefa") } },
+                state = rememberTooltipState()
+            ) {
+                FormSectionLabel("Lembrar antes")
+            }
             Text(
                 "Receba um lembrete diário a partir do número de dias selecionado até o dia anterior à tarefa. Ex: \"2 dias antes\" gera lembretes no 2º e no 1º dia antes.",
                 style = MaterialTheme.typography.bodySmall,
@@ -565,10 +590,16 @@ fun TaskFormScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Switch(
-                    checked = uiState.showInNotification,
-                    onCheckedChange = { viewModel.onIntent(TaskFormIntent.ToggleShowInNotification(it)) }
-                )
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    tooltip = { PlainTooltip { Text("Quando ativo, a tarefa aparece na tela de bloqueio e nas notificações persistentes") } },
+                    state = rememberTooltipState()
+                ) {
+                    Switch(
+                        checked = uiState.showInNotification,
+                        onCheckedChange = { viewModel.onIntent(TaskFormIntent.ToggleShowInNotification(it)) }
+                    )
+                }
             }
 
             // ── Validation error ──

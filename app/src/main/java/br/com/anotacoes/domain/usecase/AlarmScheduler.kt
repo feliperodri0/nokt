@@ -261,20 +261,31 @@ class AlarmScheduler {
             RecurrenceType.Monthly -> {
                 val dayOfMonth = task.recurrence.dayOfMonth ?: task.date.dayOfMonth
                 var currentDate = startDate
+
+                // Adjust startDate to the first occurrence on or after the start date
+                if (currentDate.dayOfMonth > dayOfMonth) {
+                    // If the current day is after the target day, move to next month
+                    currentDate = currentDate.plusMonths(1)
+                }
+
+                // Set to the target day of month, adjusting for month length (e.g. Jan 31 -> Feb 28)
+                currentDate = java.time.LocalDate.of(
+                    currentDate.year,
+                    currentDate.month,
+                    dayOfMonth.coerceAtMost(currentDate.lengthOfMonth())
+                )
+
+                // Add occurrences for each month until endDate
                 while (currentDate.isBefore(endDate) || currentDate.isEqual(endDate)) {
-                    if (currentDate.dayOfMonth == dayOfMonth) {
-                        occurrences.add(currentDate)
-                        // Jump to same day next month to avoid multiple hits in the same month
-                        currentDate = currentDate.plusMonths(1)
-                        if (currentDate.monthValue != ((currentDate.minusMonths(1).monthValue) % 12) + 1) {
-                            // Handle month-end edge cases (e.g. Jan 31 -> Feb 28/29 -> Mar 28/29)
-                            currentDate = java.time.LocalDate.of(currentDate.year, currentDate.month, dayOfMonth.coerceAtMost(currentDate.lengthOfMonth()))
-                        } else {
-                            currentDate = java.time.LocalDate.of(currentDate.year, currentDate.month, dayOfMonth.coerceAtMost(currentDate.lengthOfMonth()))
-                        }
-                    } else {
-                        currentDate = currentDate.plusDays(1)
-                    }
+                    occurrences.add(currentDate)
+
+                    // Move to the same day next month, adjusting for month length
+                    val nextMonth = currentDate.plusMonths(1)
+                    currentDate = java.time.LocalDate.of(
+                        nextMonth.year,
+                        nextMonth.month,
+                        dayOfMonth.coerceAtMost(nextMonth.lengthOfMonth())
+                    )
                 }
             }
             RecurrenceType.Yearly -> {

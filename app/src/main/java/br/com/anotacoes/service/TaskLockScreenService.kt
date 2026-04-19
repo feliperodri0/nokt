@@ -117,10 +117,12 @@ class TaskLockScreenService : Service() {
         val taskTitle = intent.getStringExtra(TaskAlarmHandler.EXTRA_TASK_TITLE) ?: return
         val daysRemaining = intent.getStringExtra(TaskAlarmHandler.EXTRA_DAYS_REMAINING)?.toIntOrNull() ?: 1
 
-        // Ensure reminder entry exists in DB so it appears in the task list
         val reminderId = "${taskId}_adv_${daysRemaining}"
         serviceScope.launch {
-            reminderRepository.setStatus(reminderId, taskId, ReminderStatus.ACTIVE)
+            val currentStatuses = reminderRepository.getAllStatuses().first()
+            if (currentStatuses[reminderId] != ReminderStatus.DELETED) {
+                reminderRepository.setStatus(reminderId, taskId, ReminderStatus.ACTIVE)
+            }
         }
 
         val contentText = when (daysRemaining) {

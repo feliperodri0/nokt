@@ -1,8 +1,6 @@
-.env
 .gradle_container/
 local.properties
 *.html
-CLAUDE.md
 .gradle/
 build/
 */build/

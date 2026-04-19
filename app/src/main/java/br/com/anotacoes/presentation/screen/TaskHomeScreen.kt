@@ -23,15 +23,20 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,10 +65,11 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import br.com.anotacoes.presentation.components.WeekCalendarRow
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskHomeScreen(
     viewModel: TaskListViewModel,
-    onNavigateToForm: () -> Unit,
+    onNavigateToForm: (java.time.LocalDate) -> Unit,
     onNavigateToEditTask: (String) -> Unit,
     onNavigateToCalendar: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -253,14 +259,20 @@ fun TaskHomeScreen(
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onNavigateToForm,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = CircleShape,
-                    modifier = Modifier.size(56.dp)
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    tooltip = { PlainTooltip { Text("Adicionar tarefa para ${uiState.selectedDate.format(java.time.format.DateTimeFormatter.ofPattern("d/MM", java.util.Locale("pt", "BR")))}") } },
+                    state = rememberTooltipState()
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Nova tarefa")
+                    FloatingActionButton(
+                        onClick = { onNavigateToForm(uiState.selectedDate) },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = CircleShape,
+                        modifier = Modifier.size(56.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Adicionar tarefa")
+                    }
                 }
             }
         ) { paddingValues ->

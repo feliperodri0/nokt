@@ -109,8 +109,8 @@ class MainActivity : ComponentActivity() {
 
                             TaskHomeScreen(
                                 viewModel = viewModel,
-                                onNavigateToForm = {
-                                    navController.navigate("form") { launchSingleTop = true }
+                                onNavigateToForm = { date ->
+                                    navController.navigate("form?date=$date") { launchSingleTop = true }
                                 },
                                 onNavigateToEditTask = { taskId ->
                                     navController.navigate("edit/$taskId") { launchSingleTop = true }

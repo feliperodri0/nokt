@@ -71,7 +71,10 @@ data class TaskFormUiState(
     val showDeleteTaskConfirmation: Boolean = false,
     val isTaskDeleted: Boolean = false,
     val pendingTaskUndo: TaskFormPendingUndo? = null
-)
+) {
+    val isDateFieldEnabled: Boolean
+        get() = recurrenceType == RecurrenceTypeOption.SINGLE
+}
 
 sealed class TaskFormIntent {
     data class UpdateTitle(val title: String) : TaskFormIntent()
