@@ -102,24 +102,33 @@ fun WeekCalendarRow(
         }
 
         // ── Faixa de dias ──────────────────────────────────────────────────────
-        LazyRow(
-            state = listState,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
-                .padding(vertical = 8.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            items(days, key = { it.toEpochDay() }) { date ->
-                DayItem(
-                    date = date,
-                    isSelected = date == selectedDate,
-                    isToday = date == today,
-                    hasEvent = datesWithTasks.contains(date),
-                    onClick = { onDateSelected(date) }
-                )
+            LazyRow(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 12.dp),
+                contentPadding = PaddingValues(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(days, key = { it.toEpochDay() }) { date ->
+                    DayItem(
+                        date = date,
+                        isSelected = date == selectedDate,
+                        isToday = date == today,
+                        hasEvent = datesWithTasks.contains(date),
+                        onClick = { onDateSelected(date) }
+                    )
+                }
             }
+            androidx.compose.material3.HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                thickness = 1.dp
+            )
         }
     }
 }
@@ -178,7 +187,7 @@ private fun DayItem(
         // Círculo com número do dia
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(34.dp)
                 .clip(CircleShape)
                 .background(circleColor)
                 .then(borderModifier),
@@ -199,7 +208,7 @@ private fun DayItem(
         Box(
             modifier = Modifier
                 .padding(top = 3.dp)
-                .size(4.dp)
+                .size(5.dp)
                 .clip(CircleShape)
                 .background(
                     if (hasEvent) {

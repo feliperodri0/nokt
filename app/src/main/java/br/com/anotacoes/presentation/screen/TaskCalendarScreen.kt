@@ -30,6 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ZoomInMap
 import androidx.compose.material.icons.filled.ZoomOutMap
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -211,22 +212,62 @@ fun TaskCalendarScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        IconButton(
-                            onClick = {
-                                if (currentMonth < MAX_YEAR_MONTH) {
-                                    currentMonth = currentMonth.plusMonths(1)
-                                }
-                            },
-                            enabled = currentMonth < MAX_YEAR_MONTH
-                        ) {
-                            Icon(
-                                Icons.Default.ChevronRight,
-                                contentDescription = "Proximo mes",
-                                tint = if (currentMonth < MAX_YEAR_MONTH)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.outline
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = {
+                                    if (currentMonth < MAX_YEAR_MONTH) {
+                                        currentMonth = currentMonth.plusMonths(1)
+                                    }
+                                },
+                                enabled = currentMonth < MAX_YEAR_MONTH
+                            ) {
+                                Icon(
+                                    Icons.Default.ChevronRight,
+                                    contentDescription = "Proximo mes",
+                                    tint = if (currentMonth < MAX_YEAR_MONTH)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.outline
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(4.dp))
+
+                            // ── Expand / Collapse toggle chip ────────────────
+                            val isExpanded = uiState.isCalendarExpanded
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        if (isExpanded) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.primaryContainer
+                                    )
+                                    .clickable {
+                                        viewModel.onIntent(
+                                            TaskListIntent.ToggleCalendarExpanded(!isExpanded)
+                                        )
+                                    }
+                                    .padding(horizontal = 9.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.ZoomInMap
+                                                  else Icons.Default.ZoomOutMap,
+                                    contentDescription = if (isExpanded) "Recolher calendario"
+                                                         else "Expandir calendario",
+                                    tint = if (isExpanded) MaterialTheme.colorScheme.onPrimary
+                                           else MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Text(
+                                    text = if (isExpanded) "Recolher" else "Expandir",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isExpanded) MaterialTheme.colorScheme.onPrimary
+                                            else MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     }
 

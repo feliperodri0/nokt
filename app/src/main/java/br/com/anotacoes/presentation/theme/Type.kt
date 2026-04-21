@@ -40,7 +40,7 @@ val Typography = Typography(
     ),
     bodyMedium = TextStyle(
         fontFamily = Poppins,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Medium,
         fontSize = 13.sp,
     ),
     bodySmall = TextStyle(

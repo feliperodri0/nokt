@@ -4,8 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -72,12 +74,13 @@ fun TaskListItem(
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
+            .height(IntrinsicSize.Min)
     ) {
         // Left colored bar (5 dp wide, fills card height)
         Box(
             modifier = Modifier
                 .width(5.dp)
-                .height(72.dp)
+                .fillMaxHeight()
                 .background(barColor)
         )
 
@@ -109,7 +112,7 @@ fun TaskListItem(
                     MaterialTheme.colorScheme.primaryContainer
                 }
                 val chipFg = if (task.taskTime.isAllDay) {
-                    MaterialTheme.colorScheme.onTertiaryContainer
+                    MaterialTheme.colorScheme.onTertiary
                 } else {
                     MaterialTheme.colorScheme.onPrimary
                 }

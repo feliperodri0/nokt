@@ -39,17 +39,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -294,7 +289,12 @@ fun TaskFormScreen(
             // ── Time ──
             FormSectionLabel("Horário")
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 13.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -338,24 +338,37 @@ fun TaskFormScreen(
             val recurrenceOptions = RecurrenceTypeOption.entries
             val recurrenceLabels = listOf("Única", "Diária", "Semanal", "Mensal", "Anual")
 
-            // Row 1: Única | Diária | Semanal
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                recurrenceOptions.take(3).forEachIndexed { index, option ->
-                    SegmentedButton(
-                        selected = uiState.recurrenceType == option,
-                        onClick = { viewModel.onIntent(TaskFormIntent.UpdateRecurrenceType(option)) },
-                        shape = SegmentedButtonDefaults.itemShape(index, 3)
-                    ) { Text(recurrenceLabels[index], fontSize = 12.sp) }
-                }
-            }
-            // Row 2: Mensal | Anual
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                recurrenceOptions.drop(3).forEachIndexed { index, option ->
-                    SegmentedButton(
-                        selected = uiState.recurrenceType == option,
-                        onClick = { viewModel.onIntent(TaskFormIntent.UpdateRecurrenceType(option)) },
-                        shape = SegmentedButtonDefaults.itemShape(index, 2)
-                    ) { Text(recurrenceLabels[index + 3], fontSize = 12.sp) }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                recurrenceOptions.forEachIndexed { index, option ->
+                    val isRecSelected = uiState.recurrenceType == option
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                if (isRecSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surface
+                            )
+                            .border(
+                                1.5.dp,
+                                if (isRecSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outlineVariant,
+                                RoundedCornerShape(16.dp)
+                            )
+                            .clickable { viewModel.onIntent(TaskFormIntent.UpdateRecurrenceType(option)) }
+                            .padding(horizontal = 14.dp, vertical = 5.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = recurrenceLabels[index],
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isRecSelected) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 }
             }
 
@@ -367,13 +380,34 @@ fun TaskFormScreen(
                     DayOfWeek.FRIDAY to "Sex", DayOfWeek.SATURDAY to "Sáb",
                     DayOfWeek.SUNDAY to "Dom"
                 )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     DayOfWeek.entries.forEach { day ->
-                        FilterChip(
-                            selected = uiState.selectedDays.contains(day),
-                            onClick = { viewModel.onIntent(TaskFormIntent.ToggleDayOfWeek(day)) },
-                            label = { Text(dayLabels[day] ?: day.name) }
-                        )
+                        val isDaySelected = uiState.selectedDays.contains(day)
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isDaySelected) MaterialTheme.colorScheme.secondary
+                                    else Color.Transparent
+                                )
+                                .border(
+                                    1.5.dp,
+                                    if (isDaySelected) MaterialTheme.colorScheme.secondary
+                                    else MaterialTheme.colorScheme.outlineVariant,
+                                    CircleShape
+                                )
+                                .clickable { viewModel.onIntent(TaskFormIntent.ToggleDayOfWeek(day)) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = dayLabels[day] ?: day.name.take(3),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (isDaySelected) MaterialTheme.colorScheme.onSecondary
+                                        else MaterialTheme.colorScheme.onBackground
+                            )
+                        }
                     }
                 }
             }
@@ -386,15 +420,36 @@ fun TaskFormScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     (1..31).forEach { day ->
-                        FilterChip(
-                            selected = uiState.selectedDayOfMonth == day,
-                            onClick = { viewModel.onIntent(TaskFormIntent.UpdateDayOfMonth(day)) },
-                            label = { Text("$day") }
-                        )
+                        val isDayMonthSelected = uiState.selectedDayOfMonth == day
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isDayMonthSelected) MaterialTheme.colorScheme.secondary
+                                    else Color.Transparent
+                                )
+                                .border(
+                                    1.5.dp,
+                                    if (isDayMonthSelected) MaterialTheme.colorScheme.secondary
+                                    else MaterialTheme.colorScheme.outlineVariant,
+                                    CircleShape
+                                )
+                                .clickable { viewModel.onIntent(TaskFormIntent.UpdateDayOfMonth(day)) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$day",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = if (isDayMonthSelected) MaterialTheme.colorScheme.onSecondary
+                                        else MaterialTheme.colorScheme.onBackground
+                            )
+                        }
                     }
                 }
             }
@@ -473,42 +528,88 @@ fun TaskFormScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 PRESET_REMINDER_DAYS.forEach { days ->
                     val isSelected = uiState.advanceReminderDays.contains(days)
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.onIntent(TaskFormIntent.ToggleAdvanceReminderDay(days)) },
-                        label = { Text(if (days == 1) "1 dia antes" else "$days dias antes") },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surface
+                            )
+                            .border(
+                                1.5.dp,
+                                if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outlineVariant,
+                                RoundedCornerShape(16.dp)
+                            )
+                            .clickable { viewModel.onIntent(TaskFormIntent.ToggleAdvanceReminderDay(days)) }
+                            .padding(horizontal = 14.dp, vertical = 5.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (days == 1) "1 dia antes" else "$days dias antes",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onBackground
                         )
-                    )
+                    }
                 }
                 // Custom reminder chip (non-preset, single value)
                 uiState.advanceReminderDays.filter { it !in PRESET_REMINDER_DAYS }.forEach { days ->
-                    FilterChip(
-                        selected = true,
-                        onClick = { viewModel.onIntent(TaskFormIntent.ToggleAdvanceReminderDay(days)) },
-                        label = { Text("$days dias antes") },
-                        trailingIcon = {
-                            Icon(Icons.Default.Close, contentDescription = "Remover", modifier = Modifier.size(14.dp))
-                        }
-                    )
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .border(1.5.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(16.dp))
+                            .clickable { viewModel.onIntent(TaskFormIntent.ToggleAdvanceReminderDay(days)) }
+                            .padding(horizontal = 14.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "$days dias antes",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Remover",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
                 // Add custom button (shown only when no custom value is active)
                 if (uiState.advanceReminderDays.none { it !in PRESET_REMINDER_DAYS }) {
-                    FilterChip(
-                        selected = false,
-                        onClick = { showCustomReminderDialog = true },
-                        label = { Text("Personalizado") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Add, contentDescription = "Adicionar", modifier = Modifier.size(14.dp))
-                        }
-                    )
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                            .clickable { showCustomReminderDialog = true }
+                            .padding(horizontal = 14.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Adicionar",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = "Personalizado",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 }
             }
 
@@ -593,7 +694,12 @@ fun TaskFormScreen(
 
             // ── Show in notification toggle ──
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 13.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
