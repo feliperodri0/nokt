@@ -21,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import android.content.Intent
 import br.com.anotacoes.R
 import br.com.anotacoes.data.settings.SettingsRepositoryImpl
 import br.com.anotacoes.domain.model.AppTheme
@@ -31,6 +32,7 @@ import br.com.anotacoes.presentation.screen.TaskCalendarScreen
 import br.com.anotacoes.presentation.screen.TaskFormScreen
 import br.com.anotacoes.presentation.screen.TaskHomeScreen
 import br.com.anotacoes.presentation.theme.AnotacoesTheme
+import br.com.anotacoes.receiver.TaskAlarmHandler
 import br.com.anotacoes.service.TaskLockScreenService
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDate
@@ -120,6 +122,15 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNavigateToSettings = {
                                     navController.navigate("settings") { launchSingleTop = true }
+                                },
+                                onNotifyReminder = { taskId, taskTitle, daysRemaining ->
+                                    val intent = Intent(this@MainActivity, TaskLockScreenService::class.java).apply {
+                                        action = TaskLockScreenService.ACTION_ADVANCE_REMINDER
+                                        putExtra(TaskAlarmHandler.EXTRA_TASK_ID, taskId)
+                                        putExtra(TaskAlarmHandler.EXTRA_TASK_TITLE, taskTitle)
+                                        putExtra(TaskAlarmHandler.EXTRA_DAYS_REMAINING, daysRemaining.toString())
+                                    }
+                                    startService(intent)
                                 }
                             )
                         }
